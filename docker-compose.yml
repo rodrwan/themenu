@@ -1,0 +1,88 @@
+services:
+  writer:
+    build:
+      context: .
+      dockerfile: Dockerfile.writer
+    container_name: themenu-writer
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/themenu?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - PORT=8080
+    depends_on:
+      - db
+      - redis
+    restart: always
+    volumes:
+      - .:/app
+    networks:
+      - themenu-network
+  reader:
+    build:
+      context: .
+      dockerfile: Dockerfile.reader
+    container_name: themenu-reader
+    ports:
+      - "8081:8081"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/themenu?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - PORT=8081
+    depends_on:
+      - db
+      - redis
+    restart: always
+    volumes:
+      - .:/app
+    networks:
+      - themenu-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: themenu-web
+    ports:
+      - "8082:8082"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PORT=8082
+    networks:
+      - themenu-network
+    depends_on:
+      - writer
+      - reader
+      - redis
+    restart: always
+    volumes:
+      - .:/app
+
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=themenu
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./seed.sql:/docker-entrypoint-initdb.d/2-seed.sql
+    networks:
+      - themenu-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - themenu-network
+
+volumes:
+  postgres_data:
+
+networks:
+  themenu-network:
+    driver: bridge

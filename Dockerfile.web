@@ -1,0 +1,29 @@
+FROM golang:1.24-alpine as builder
+
+WORKDIR /app
+
+# Instalar dependencias necesarias
+RUN apk add --no-cache git
+
+# Instalar CompileDaemon para hot-reload
+RUN go install github.com/githubnemo/CompileDaemon@latest
+
+# Instalar templ (última versión compatible con Go 1.24)
+RUN go install github.com/a-h/templ/cmd/templ@latest
+
+# Copiar archivos de dependencias
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copiar el código fuente
+COPY . .
+
+# Generar código Templ
+RUN templ generate
+
+# Exponer el puerto
+EXPOSE 8082
+
+# Comando por defecto para desarrollo con mejor configuración de hot reload
+ENTRYPOINT CompileDaemon -build="go build -o /app/themenu-web cmd/web/main.go" \
+    -command="/app/themenu-web"

@@ -1,0 +1,27 @@
+# Binarios
+bin/
+tmp/
+
+# Dependencias
+vendor/
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+build-errors.log
+
+# Archivos de entorno
+.env
+.env.local
+
+# Archivos de Docker
+postgres_data/ 
